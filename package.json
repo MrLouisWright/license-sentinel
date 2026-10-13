@@ -1,6 +1,6 @@
 {
   "name": "license-sentinel",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "License compliance gate for npm projects: reads node_modules and npm/pnpm/yarn lockfiles, resolves SPDX expressions and LICENSE texts, enforces allow/deny lists, presets and project-license compatibility, and emits CycloneDX 1.5 and SPDX 2.3 SBOMs, NOTICES, and text/JSON/SARIF/Markdown reports. Zero deps.",
   "type": "module",
   "main": "./src/index.js",
