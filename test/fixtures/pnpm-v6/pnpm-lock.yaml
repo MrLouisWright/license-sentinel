@@ -1,0 +1,40 @@
+lockfileVersion: '6.0'
+
+dependencies:
+  left:
+    specifier: ^1.0.0
+    version: 1.2.0
+  copyleft:
+    specifier: ^2.0.0
+    version: 2.0.0
+
+devDependencies:
+  tester:
+    specifier: ^3.0.0
+    version: 3.1.0
+
+packages:
+
+  /copyleft@2.0.0:
+    resolution: {integrity: sha512-CCCC}
+    dev: false
+
+  /left@1.2.0:
+    resolution: {integrity: sha512-AAAA}
+    dependencies:
+      pad: 1.0.1
+    dev: false
+
+  /pad@1.0.1:
+    resolution: {integrity: sha512-DDDD}
+    dev: false
+
+  /pad@2.0.0:
+    resolution: {integrity: sha512-EEEE}
+    dev: true
+
+  /tester@3.1.0:
+    resolution: {integrity: sha512-FFFF}
+    dependencies:
+      pad: 2.0.0
+    dev: true

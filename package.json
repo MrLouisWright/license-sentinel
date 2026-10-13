@@ -1,0 +1,61 @@
+{
+  "name": "license-sentinel",
+  "version": "0.0.0",
+  "description": "License compliance gate for npm projects: reads node_modules and npm/pnpm/yarn lockfiles, resolves SPDX expressions and LICENSE texts, enforces allow/deny lists, presets and project-license compatibility, and emits CycloneDX 1.5 and SPDX 2.3 SBOMs, NOTICES, and text/JSON/SARIF/Markdown reports. Zero deps.",
+  "type": "module",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "default": "./src/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "license-sentinel": "bin/license-sentinel.js"
+  },
+  "files": [
+    "src",
+    "bin",
+    "action.yml",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "keywords": [
+    "license",
+    "licenses",
+    "license-checker",
+    "license-compliance",
+    "spdx",
+    "sbom",
+    "cyclonedx",
+    "notices",
+    "attribution",
+    "gpl",
+    "open-source",
+    "compliance",
+    "sarif",
+    "cli",
+    "github-action",
+    "devsecops",
+    "supply-chain-security"
+  ],
+  "author": "Louis Wright <hello@louiswright.co.uk> (https://github.com/MrLouisWright)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrLouisWright/license-sentinel.git"
+  },
+  "bugs": {
+    "url": "https://github.com/MrLouisWright/license-sentinel/issues"
+  },
+  "homepage": "https://github.com/MrLouisWright/license-sentinel#readme"
+}

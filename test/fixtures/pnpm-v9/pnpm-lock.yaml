@@ -1,0 +1,64 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      left:
+        specifier: ^1.0.0
+        version: 1.2.0
+      copyleft:
+        specifier: ^2.0.0
+        version: 2.0.0(left@1.2.0)
+    devDependencies:
+      tester:
+        specifier: ^3.0.0
+        version: 3.1.0
+
+packages:
+
+  '@scope/inner@0.3.0':
+    resolution: {integrity: sha512-BBBB}
+
+  copyleft@2.0.0:
+    resolution: {integrity: sha512-CCCC}
+    peerDependencies:
+      left: '*'
+
+  left@1.2.0:
+    resolution: {integrity: sha512-AAAA}
+    engines: {node: '>=8'}
+
+  pad@1.0.1:
+    resolution: {integrity: sha512-DDDD}
+
+  pad@2.0.0:
+    resolution: {integrity: sha512-EEEE}
+
+  tester@3.1.0:
+    resolution: {integrity: sha512-FFFF}
+
+snapshots:
+
+  '@scope/inner@0.3.0': {}
+
+  copyleft@2.0.0(left@1.2.0):
+    dependencies:
+      left: 1.2.0
+      '@scope/inner': 0.3.0
+
+  left@1.2.0:
+    dependencies:
+      pad: 1.0.1
+
+  pad@1.0.1: {}
+
+  pad@2.0.0: {}
+
+  tester@3.1.0:
+    dependencies:
+      pad: 2.0.0
