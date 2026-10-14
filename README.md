@@ -208,6 +208,10 @@ const lockOnly = await auditAsync('.', { source: 'lockfile', registry: true });
 
 This tool helps you find and manage license risk; it is not legal advice. Text detection uses heuristics for common licenses. Anything it cannot recognise is reported, never silently allowed.
 
+## Support
+
+If this project is useful to you, you can support its development with a donation: [Buy me a coffee](https://donate.stripe.com/aFa00lek3cvX4Ds2Fk9EI0b). It helps keep these tools maintained, documented and free for everyone.
+
 ## License
 
-MIT © Louis Wright
+MIT © Louis Wright ([Louis Wright](https://github.com/MrLouisWright))
