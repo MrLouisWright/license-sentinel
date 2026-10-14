@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>license-sentinel · A license compliance gate for npm projects, plus CycloneDX/SPDX SBOMs and a NOTICES file.</title>
+<meta name="description" content="A license compliance gate for npm projects, plus CycloneDX/SPDX SBOMs and a NOTICES file. Reads every installed dependency (from node_modules or npm, pnpm and yarn lockfiles), works out each license from package.json and the LICENSE text, parses SPDX expressions and checks the result against your po">
+<meta name="theme-color" content="#07090c">
+<link rel="canonical" href="https://mrlouiswright.github.io/license-sentinel/">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:title" content="license-sentinel: A license compliance gate for npm projects, plus CycloneDX/SPDX SBOMs and a NOTICES file.">
+<meta property="og:description" content="A license compliance gate for npm projects, plus CycloneDX/SPDX SBOMs and a NOTICES file. Reads every installed dependency (from node_modules or npm, pnpm and yarn lockfiles), works out each license from package.json and the LICENSE text, parses SPDX expressions and checks the result against your po">
+<meta property="og:url" content="https://mrlouiswright.github.io/license-sentinel/">
+<meta property="og:image" content="https://mrlouiswright.github.io/license-sentinel/og.png">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="license-sentinel: A license compliance gate for npm projects, plus CycloneDX/SPDX SBOMs and a NOTICES file.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="license-sentinel">
+<meta name="twitter:description" content="A license compliance gate for npm projects, plus CycloneDX/SPDX SBOMs and a NOTICES file.">
+<meta name="twitter:image" content="https://mrlouiswright.github.io/license-sentinel/og.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<style>:root{--accent:#60a5fa;--accent-2:#1d4ed8}</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="brand" href="./"><span class="brand-g" aria-hidden="true">⚖</span>license-sentinel</a>
+    <nav aria-label="Primary"><ul>
+      <li><a href="#features">Features</a></li><li><a href="#usage">Usage</a></li><li><a href="#ci">CI</a></li><li><a href="#options">Options</a></li>
+      <li><a class="gh" href="https://github.com/MrLouisWright/license-sentinel">GitHub</a></li>
+    </ul></nav>
+  </div>
+</header>
+<main id="main">
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <p class="eyebrow"><span class="dot" aria-hidden="true"></span> npm package · MIT · Node ≥ 18</p>
+      <h1>license-sentinel</h1>
+      <p class="tagline">A license compliance gate for npm projects, plus CycloneDX/SPDX SBOMs and a NOTICES file.</p>
+      <p class="lede">Reads every installed dependency (from node_modules or npm, pnpm and yarn lockfiles), works out each license from package.json and the LICENSE text, parses SPDX expressions and checks the result against your policy and your project's own license. The same run can write CycloneDX 1.6 and SPDX 2.3 SBOMs, attribution pages and a NOTICES file. Zero runtime dependencies.</p>
+      <div class="install">
+        <code id="install-cmd"><span class="prompt" aria-hidden="true">$</span> npm i -D license-sentinel</code>
+        <button class="copy" type="button" data-copy="npm i -D license-sentinel" aria-label="Copy install command">Copy</button>
+        <span class="sr-only" role="status" aria-live="polite" id="copy-status"></span>
+      </div>
+      <div class="ctas">
+        <a class="btn primary" href="https://github.com/MrLouisWright/license-sentinel#readme">Read the docs</a>
+        <a class="btn" href="https://www.npmjs.com/package/license-sentinel">View on npm</a>
+        <a class="btn" href="https://github.com/MrLouisWright/license-sentinel">Source on GitHub</a>
+      </div>
+      <div class="badges">
+        <a href="https://www.npmjs.com/package/license-sentinel"><img src="https://img.shields.io/npm/v/license-sentinel.svg?style=flat-square&amp;color=111" alt="npm version of license-sentinel" height="20"></a>
+        <a href="https://github.com/MrLouisWright/license-sentinel/actions/workflows/ci.yml"><img src="https://github.com/MrLouisWright/license-sentinel/actions/workflows/ci.yml/badge.svg" alt="CI status" height="20"></a>
+        <a href="https://github.com/MrLouisWright/license-sentinel/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square" alt="License: MIT" height="20"></a>
+        <a href="https://github.com/MrLouisWright/license-sentinel"><img src="https://img.shields.io/github/stars/MrLouisWright/license-sentinel?style=flat-square" alt="GitHub stars for license-sentinel" height="20"></a>
+      </div>
+    </div>
+    <figure class="term" aria-label="Example terminal session running license-sentinel">
+      <div class="term-bar"><span></span><span></span><span></span><em>~/project — zsh</em></div>
+      <pre class="term-body" data-cmd="npx license-sentinel --deny &quot;AGPL-*&quot;"><span class="ln cmd"><span class="prompt">$</span> <span class="typed">npx license-sentinel --deny &quot;AGPL-*&quot;</span><span class="caret" aria-hidden="true"></span></span><span class="out"><span class="ln b">license-sentinel — mixed-app@2.0.0 (MIT, permissive)</span><span class="ln dim">16 package(s) from node_modules: 16 prod, 0 dev</span><span class="ln dim">&nbsp;</span><span class="ln e">HIGH     agpl-lib@1.0.0 is licensed AGPL-3.0-only; AGPL-3.0-only is denied by policy [denied-license]</span><span class="ln f">         ↳ fix: Replace the package with a compatible alternative, or add a time-boxed exception with a reason.</span><span class="ln e">HIGH     gpl-lib@1.0.0 is GPL-3.0-only (strong-copyleft) but the project is MIT (permissive) [incompatible-license]</span><span class="ln e">HIGH     proprietary@1.0.0 is UNLICENSED: no rights are granted to use, copy or distribute it [unlicensed]</span><span class="ln w">MEDIUM   nolicense@0.0.1 has no license: No license field and no LICENSE file [missing-license]</span><span class="ln i">LOW      aliased@1.0.0 declares &quot;Apache 2.0&quot; (&quot;Apache 2.0&quot; is not a valid SPDX expression; read as Apache-2.0) [invalid-spdx]</span><span class="ln dim">&nbsp;</span><span class="ln b">3 high, 2 medium, 4 low</span><span class="ln e">✖ Failing (fail-on: high).</span></span></pre>
+      <figcaption class="sr-only">Sample output adapted from the license-sentinel README.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="sec" id="problem">
+  <div class="wrap narrow">
+    <h2><span class="h-idx">01</span> The problem</h2>
+    <p class="big">A GPL package three levels deep in an MIT product, an AGPL dependency in a SaaS, a package with no license at all: you usually find out from legal, late.</p>
+    <p class="big">license-sentinel puts the check in CI, with a policy you control, exceptions that need a reason and expire, and the SBOM and attribution files compliance teams ask for.</p>
+  </div>
+</section>
+
+<section class="sec" id="features">
+  <div class="wrap">
+    <h2><span class="h-idx">02</span> Features</h2>
+    <div class="grid">
+      <article class="card"><span class="card-i" aria-hidden="true">01</span><h3>Every dependency source</h3><p>node_modules (npm, yarn, pnpm layouts) or lockfiles: package-lock v1–v3, pnpm-lock v5/v6/v9, yarn.lock v1 and Berry.</p></article>
+      <article class="card"><span class="card-i" aria-hidden="true">02</span><h3>License resolution</h3><p>Reads license fields and identifies LICENSE / COPYING text; --registry fills gaps for lockfile-only scans.</p></article>
+      <article class="card"><span class="card-i" aria-hidden="true">03</span><h3>SPDX expressions</h3><p>AND, OR, WITH and parentheses, with deprecated ids and common misspellings normalised and flagged.</p></article>
+      <article class="card"><span class="card-i" aria-hidden="true">04</span><h3>Project-aware policy</h3><p>Allow / deny lists, presets, and a category check against your own project's license.</p></article>
+      <article class="card"><span class="card-i" aria-hidden="true">05</span><h3>Exceptions with expiry</h3><p>Each exception needs a reason and can have an expiry date, an override license or a rule scope.</p></article>
+      <article class="card"><span class="card-i" aria-hidden="true">06</span><h3>SBOMs</h3><p>CycloneDX 1.6 (schema-validated in CI) and SPDX 2.3 JSON.</p></article>
+      <article class="card"><span class="card-i" aria-hidden="true">07</span><h3>Attribution</h3><p>NOTICES file, CSV inventory, HTML and Markdown attribution pages, custom templates.</p></article>
+      <article class="card"><span class="card-i" aria-hidden="true">08</span><h3>Monorepos</h3><p>--workspaces audits each workspace package separately.</p></article>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="usage">
+  <div class="wrap">
+    <h2><span class="h-idx">03</span> Usage</h2>
+    <div class="usage">
+      <div class="u"><p class="u-t"># Audit production deps</p><pre><code><span class="prompt" aria-hidden="true">$</span> npx license-sentinel</code></pre></div>
+      <div class="u"><p class="u-t"># Permissive preset, stricter gate</p><pre><code><span class="prompt" aria-hidden="true">$</span> npx license-sentinel --preset permissive --fail-on medium</code></pre></div>
+      <div class="u"><p class="u-t"># Lockfile only, no node_modules</p><pre><code><span class="prompt" aria-hidden="true">$</span> npx license-sentinel --source lockfile --registry</code></pre></div>
+      <div class="u"><p class="u-t"># SBOMs + NOTICES</p><pre><code><span class="prompt" aria-hidden="true">$</span> npx license-sentinel --cyclonedx bom.cdx.json --spdx bom.spdx.json --notices THIRD_PARTY_NOTICES.txt</code></pre></div>
+    </div>
+
+  </div>
+</section>
+
+<section class="sec" id="ci">
+  <div class="wrap">
+    <h2><span class="h-idx">04</span> CI / GitHub Action</h2>
+    <pre class="code yaml"><code>permissions:
+  contents: read
+jobs:
+  licenses:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@&lt;sha&gt; # v4
+        with: { persist-credentials: false }
+      - run: npm ci --ignore-scripts
+      - uses: MrLouisWright/license-sentinel@&lt;sha&gt; # v1
+        with:
+          preset: permissive
+          deny: 'AGPL-*,SSPL-1.0'
+          fail-on: medium
+          cyclonedx: bom.cdx.json
+          notices: THIRD_PARTY_NOTICES.txt</code></pre>
+  </div>
+</section>
+
+<section class="sec" id="options">
+  <div class="wrap">
+    <h2><span class="h-idx">05</span> Options &amp; flags</h2>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th scope="col">Flag</th><th scope="col">Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>[dir]</code></td><td>Project directory (default .)</td></tr>
+        <tr><td><code>--source &lt;s&gt;</code></td><td>auto (default), node_modules, lockfile, or a path to a lockfile</td></tr>
+        <tr><td><code>--include-dev / --prod / --omit=dev</code></td><td>Include devDependencies / production only (default)</td></tr>
+        <tr><td><code>--workspaces</code></td><td>Audit each workspace package in a monorepo</td></tr>
+        <tr><td><code>--workspace-report-dir &lt;dir&gt;</code></td><td>With --workspaces, write &lt;dir&gt;/&lt;workspace&gt;.json per package</td></tr>
+        <tr><td><code>--registry, --registry-url &lt;url&gt;</code></td><td>Look up licenses missing from lockfiles on the registry</td></tr>
+        <tr><td><code>--preset &lt;p&gt;</code></td><td>permissive, weak-copyleft or strong-copyleft</td></tr>
+        <tr><td><code>--allow &lt;list&gt; / --deny &lt;list&gt;</code></td><td>SPDX ids, globs (GPL-*), categories (category:permissive)</td></tr>
+        <tr><td><code>--project-license &lt;expr&gt;</code></td><td>Override the project's own license</td></tr>
+        <tr><td><code>-c, --config &lt;file&gt;</code></td><td>JSON config (default .license-sentinel.json)</td></tr>
+        <tr><td><code>-f, --format</code></td><td>text (default), json, sarif, markdown</td></tr>
+        <tr><td><code>--json/--sarif/--markdown &lt;file&gt;</code></td><td>Also write that report to a file</td></tr>
+        <tr><td><code>--cyclonedx &lt;file&gt; / --spdx &lt;file&gt;</code></td><td>Write a CycloneDX 1.6 / SPDX 2.3 JSON SBOM</td></tr>
+        <tr><td><code>--notices &lt;file&gt;</code></td><td>Write a third-party NOTICES / attribution file</td></tr>
+        <tr><td><code>--csv / --html / --attribution-md</code></td><td>CSV inventory, HTML attribution page, Markdown table</td></tr>
+        <tr><td><code>--template / --template-out</code></td><td>Render a custom template</td></tr>
+        <tr><td><code>--reproducible</code></td><td>Deterministic SBOM serial number / document namespace</td></tr>
+        <tr><td><code>--fail-on &lt;sev&gt;</code></td><td>critical, high (default), medium, low, info or none</td></tr>
+        <tr><td><code>--verbose</code></td><td>List every package in text output</td></tr>
+        <tr><td><code>--list-rules</code></td><td>Rules and default severities</td></tr>
+      </tbody>
+    </table></div>
+    <p class="note">Full reference, config file format and API in the <a href="https://github.com/MrLouisWright/license-sentinel#readme">README</a>.</p>
+  </div>
+</section>
+
+<section class="sec more" id="more">
+  <div class="wrap">
+    <h2><span class="h-idx">06</span> More tools by Louis Wright</h2>
+    <div class="tools">
+<a class="tool" href="https://mrlouiswright.github.io/bundle-secret-guard/" style="--a:#f43f5e"><span class="tool-g" aria-hidden="true">S</span><span><strong>bundle-secret-guard</strong><small>Fail the build when secrets ship to the browser.</small></span></a>
+<a class="tool" href="https://mrlouiswright.github.io/cookie-sentinel/" style="--a:#fbbf24"><span class="tool-g" aria-hidden="true">K</span><span><strong>cookie-sentinel</strong><small>Audit the cookies your site sets before attackers do.</small></span></a>
+<a class="tool" href="https://mrlouiswright.github.io/csp-forge/" style="--a:#f59e0b"><span class="tool-g" aria-hidden="true">C</span><span><strong>csp-forge</strong><small>Generate a tight Content-Security-Policy from your built site.</small></span></a>
+<a class="tool" href="https://mrlouiswright.github.io/form-honeypot-guard/" style="--a:#a3e635"><span class="tool-g" aria-hidden="true">F</span><span><strong>form-honeypot-guard</strong><small>Block form spam bots without a captcha.</small></span></a>
+<a class="tool" href="https://mrlouiswright.github.io/header-sentinel/" style="--a:#22d3ee"><span class="tool-g" aria-hidden="true">H</span><span><strong>header-sentinel</strong><small>Fail CI when deployed URLs ship weak HTTP security headers.</small></span></a>
+<a class="tool" href="https://mrlouiswright.github.io/package-tripwire/" style="--a:#fb923c"><span class="tool-g" aria-hidden="true">P</span><span><strong>package-tripwire</strong><small>Fail CI when dependency changes look suspicious.</small></span></a>
+<a class="tool" href="https://mrlouiswright.github.io/sri-sentinel/" style="--a:#34d399"><span class="tool-g" aria-hidden="true">I</span><span><strong>sri-sentinel</strong><small>Subresource Integrity for your built site: generate, write and check it in CI.</small></span></a>
+<a class="tool" href="https://mrlouiswright.github.io/static-link-sentinel/" style="--a:#a78bfa"><span class="tool-g" aria-hidden="true">L</span><span><strong>static-link-sentinel</strong><small>Fail CI on broken links before you deploy.</small></span></a>
+<a class="tool" href="https://mrlouiswright.github.io/workflow-sentinel/" style="--a:#2dd4bf"><span class="tool-g" aria-hidden="true">W</span><span><strong>workflow-sentinel</strong><small>Catch insecure GitHub Actions workflows before they're merged.</small></span></a>
+    </div>
+  </div>
+</section>
+</main>
+<footer class="foot">
+  <div class="wrap foot-in">
+    <p>MIT © <a href="https://github.com/MrLouisWright">Louis Wright</a></p>
+    <p><a href="https://github.com/MrLouisWright/license-sentinel">GitHub</a> · <a href="https://www.npmjs.com/package/license-sentinel">npm</a> · <a href="https://github.com/MrLouisWright/license-sentinel#readme">README</a></p>
+  </div>
+</footer>
+<script src="app.js" defer></script>
+</body>
+</html>
