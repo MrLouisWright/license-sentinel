@@ -54,7 +54,7 @@ test('all output files', () => {
   assert.ok(JSON.parse(readFileSync(f('r.json'), 'utf8')).findings.length);
   assert.equal(JSON.parse(readFileSync(f('r.sarif'), 'utf8')).version, '2.1.0');
   assert.match(readFileSync(f('r.md'), 'utf8'), /license-sentinel/);
-  assert.equal(JSON.parse(readFileSync(f('bom.cdx.json'), 'utf8')).specVersion, '1.5');
+  assert.equal(JSON.parse(readFileSync(f('bom.cdx.json'), 'utf8')).specVersion, '1.6');
   assert.equal(JSON.parse(readFileSync(f('bom.spdx.json'), 'utf8')).spdxVersion, 'SPDX-2.3');
   assert.match(readFileSync(f('NOTICES.txt'), 'utf8'), /dev-gpl/);
   for (const fmt of ['json', 'sarif', 'markdown']) assert.ok(run([mixed, '-f', fmt]).out.length > 50);

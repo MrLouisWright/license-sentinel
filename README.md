@@ -1,10 +1,15 @@
 # license-sentinel
 
+[![CI](https://github.com/MrLouisWright/license-sentinel/actions/workflows/ci.yml/badge.svg)](https://github.com/MrLouisWright/license-sentinel/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/license-sentinel.svg)](https://www.npmjs.com/package/license-sentinel)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D18-green.svg)](https://nodejs.org/)
+
 > A license compliance gate for npm projects, plus CycloneDX/SPDX SBOMs and a NOTICES file.
 
-`license-sentinel` reads every installed dependency (from `node_modules` or the npm, pnpm and yarn lockfiles), works out each package's license from `package.json` and the LICENSE file text, parses SPDX expressions and checks the result against your policy and your project's own license. GPL in an MIT project, AGPL anywhere, `UNLICENSED`, missing and unrecognised licenses are reported with a severity and a **concrete fix**. The same run can write a **CycloneDX 1.5** SBOM, an **SPDX 2.3** SBOM and a third-party **NOTICES** file.
+`license-sentinel` reads every installed dependency (from `node_modules` or the npm, pnpm and yarn lockfiles), works out each package's license from `package.json` and the LICENSE file text, parses SPDX expressions and checks the result against your policy and your project's own license. GPL in an MIT project, AGPL anywhere, `UNLICENSED`, missing and unrecognised licenses are reported with a severity and a **concrete fix**. The same run can write a **CycloneDX 1.6** SBOM (validated in CI against the [official schema](https://github.com/CycloneDX/specification)), an **SPDX 2.3** SBOM, CSV/HTML/Markdown attribution output, and a third-party **NOTICES** file.
 
-CLI, library and GitHub Action. Node.js 18+, **zero runtime dependencies**.
+CLI, library (`import` and `require`) and GitHub Action. Node.js 18+, **zero runtime dependencies**. Tests live under [`test/`](test/) and run on every push in [GitHub Actions](.github/workflows/ci.yml) (including CycloneDX schema validation and ESM/CJS smoke checks).
 
 ## Features
 
@@ -12,7 +17,8 @@ CLI, library and GitHub Action. Node.js 18+, **zero runtime dependencies**.
 - **License resolution:** reads `license`, legacy `license: {type}` and `licenses: [...]`, `SEE LICENSE IN <file>` and lockfile license fields. When there is no usable field, it identifies the LICENSE/COPYING text: MIT, MIT-0, ISC, 0BSD, BSD-2/3/4-Clause, Apache-2.0, GPL/LGPL/AGPL, MPL-2.0, EPL, Unlicense, CC0, BSL-1.0, Zlib, BlueOak and more. For lockfile-only scans, `--registry` looks missing licenses up on the npm registry.
 - **SPDX expressions:** `AND`, `OR`, `WITH` and parentheses, with `OR` choosing **any** allowed option (the least restrictive). Deprecated ids (`GPL-2.0+`, `GPL-3.0`) and common non-SPDX spellings (`Apache 2.0`, `MIT/Apache-2.0`, lowercase operators) are normalised and flagged. Linking exceptions such as `Classpath-exception-2.0` lower GPL to weak copyleft.
 - **Policy:** allow and deny lists (SPDX ids, globs like `GPL-*`, or categories like `category:permissive`), the presets `permissive`, `weak-copyleft` and `strong-copyleft`, and a **category check against the project's own license**. Each per-package exception needs a reason and can have an expiry date, an overriding license or a rule scope. Per-rule severity can be changed or set to `off`.
-- **Output:** text, JSON, SARIF 2.1.0 and Markdown reports; CycloneDX 1.5 JSON and SPDX 2.3 JSON SBOMs (both validated against the official schemas); a third-party NOTICES file. `--fail-on` and exit codes 0/1/2.
+- **Monorepos:** `--workspaces` runs a separate audit per workspace package (npm `workspaces`, `pnpm-workspace.yaml`); `--workspace-report-dir` writes one JSON file per package. Hoisted installs at the repo root are supported.
+- **Output:** text, JSON, SARIF 2.1.0 and Markdown reports; CycloneDX **1.6** JSON and SPDX 2.3 JSON SBOMs; CSV inventory; HTML and Markdown attribution pages; custom `--template` files; third-party NOTICES. `--fail-on` and exit codes 0/1/2.
 
 ## Rules
 
@@ -43,6 +49,8 @@ npx license-sentinel --preset permissive --fail-on medium
 npx license-sentinel --deny "GPL-*,AGPL-*,SSPL-1.0" --include-dev
 npx license-sentinel --source lockfile --registry      # no node_modules: use the lockfile + npm registry
 npx license-sentinel --cyclonedx bom.cdx.json --spdx bom.spdx.json --notices THIRD_PARTY_NOTICES.txt
+npx license-sentinel --omit=dev --csv licenses.csv --html attribution.html
+npx license-sentinel --workspaces --workspace-report-dir reports/
 ```
 
 ### Sample output
@@ -96,7 +104,9 @@ LOW      mismatch@1.0.0 declares MIT but LICENSE looks like BSD-3-Clause [licens
 |---|---|
 | `[dir]` | Project directory (default `.`) |
 | `--source <s>` | `auto` (default: `node_modules` if present, else the lockfile), `node_modules`, `lockfile`, or a path to a lockfile |
-| `--include-dev` / `--prod` | Include devDependencies / production only (default) |
+| `--include-dev` / `--prod` / `--omit=dev` | Include devDependencies / production only (default) |
+| `--workspaces` | Audit each workspace package in a monorepo |
+| `--workspace-report-dir <dir>` | With `--workspaces`, write `<dir>/<workspace>.json` per package |
 | `--registry`, `--registry-url <url>` | Look up licenses missing from lockfiles on the registry (token: `LICENSE_SENTINEL_REGISTRY_TOKEN`) |
 | `--preset <p>` | `permissive`, `weak-copyleft` or `strong-copyleft` |
 | `--allow <list>` / `--deny <list>` | Comma-separated or repeated: SPDX ids, globs (`GPL-*`), categories (`category:permissive`) |
@@ -104,8 +114,10 @@ LOW      mismatch@1.0.0 declares MIT but LICENSE looks like BSD-3-Clause [licens
 | `-c, --config <file>` | JSON config (default `.license-sentinel.json`, or `"licenseSentinel"` in package.json) |
 | `-f, --format` | `text` (default), `json`, `sarif`, `markdown` |
 | `--json/--sarif/--markdown <file>` | Also write that report to a file |
-| `--cyclonedx <file>` / `--spdx <file>` | Write a CycloneDX 1.5 / SPDX 2.3 JSON SBOM |
+| `--cyclonedx <file>` / `--spdx <file>` | Write a CycloneDX 1.6 / SPDX 2.3 JSON SBOM |
 | `--notices <file>` | Write a third-party NOTICES / attribution file (production deps unless `--include-dev`) |
+| `--csv` / `--html` / `--attribution-md` | CSV inventory, HTML attribution page, Markdown table |
+| `--template` / `--template-out` | Render a custom template (see below) |
 | `--reproducible` | Deterministic SBOM serial number / document namespace |
 | `--fail-on <sev>` | `critical`, `high` (default), `medium`, `low`, `info` or `none` |
 | `--verbose` | List every package in text output |
@@ -130,11 +142,30 @@ LOW      mismatch@1.0.0 declares MIT but LICENSE looks like BSD-3-Clause [licens
     { "package": "some-gpl-tool", "reason": "CLI only, never bundled. Approved by legal 2026-09", "expires": "2027-03-31" },
     { "package": "old-lib@1.x", "license": "MIT", "reason": "No license field; MIT confirmed in upstream repo (issue #42)" },
     { "package": "fork-lib", "rules": ["license-mismatch"], "reason": "LICENSE text checked by hand" }
+  ],
+  "overrides": [
+    { "package": "nolicense", "license": "MIT", "reason": "MIT confirmed in upstream README (ticket #99)" }
   ]
 }
 ```
 
-Each exception needs a `package` (name, glob or `name@range` with `1.x`, `^1` or an exact version) and a `reason`. With `license` it **replaces** the detected license and is still evaluated against the policy. Without one it **suppresses** the package's findings, optionally only those in `rules`. After `expires` it stops applying and an `exception-expired` finding is raised. Suppressed findings are listed under `suppressed` in the JSON report.
+Each exception needs a `package` (name, glob or `name@range` with `1.x`, `^1` or an exact version) and a `reason`. With `license` it **replaces** the detected license and is still evaluated against the policy. Without one it **suppresses** the package's findings, optionally only those in `rules`. **`overrides`** are sugar for license replacements (same fields as an exception with `license`, always with a required `reason`). After `expires` it stops applying and an `exception-expired` finding is raised. Suppressed findings are listed under `suppressed` in the JSON report.
+
+### Custom templates
+
+Built-in `--csv`, `--html` and `--attribution-md` cover most attribution needs. For bespoke formats, pass a template file:
+
+```text
+{{project.name}} — generated {{generatedAt}}
+{{#packages}}{{name}},{{version}},{{license}}
+{{/packages}}
+```
+
+```bash
+npx license-sentinel --template notices.tpl --template-out NOTICES.custom
+```
+
+Placeholders: `{{project.name}}`, `{{generatedAt}}`, `{{summary.packages}}`, and inside `{{#packages}}…{{/packages}}`: `{{name}}`, `{{version}}`, `{{license}}`, `{{category}}`, `{{path}}`.
 
 ## GitHub Action
 
@@ -162,12 +193,14 @@ Inputs: `path`, `source`, `preset`, `allow`, `deny`, `include-dev`, `fail-on`, `
 ## Library
 
 ```js
-import { audit, auditAsync, toCycloneDX, toSPDX, toNotices, formatText, parseSpdx } from 'license-sentinel';
+import { audit, auditAsync, auditWorkspaces, toCycloneDX, toSPDX, toNotices, formatText, parseSpdx } from 'license-sentinel';
+const { audit: auditCjs } = require('license-sentinel'); // dist/index.cjs after npm install
 
 const report = audit('.', { preset: 'permissive', deny: ['AGPL-*'] });
 console.log(formatText(report, { failOn: 'high' }));
 fs.writeFileSync('bom.cdx.json', toCycloneDX(report));
 
+const mono = auditWorkspaces('.', { includeDev: false });
 const lockOnly = await auditAsync('.', { source: 'lockfile', registry: true });
 ```
 

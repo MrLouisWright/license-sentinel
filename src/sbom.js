@@ -20,8 +20,10 @@ function deterministicUuid(seed) {
   return `${h.slice(0, 8)}-${h.slice(8, 12)}-4${h.slice(13, 16)}-a${h.slice(17, 20)}-${h.slice(20, 32)}`;
 }
 
-/** CycloneDX 1.5 JSON */
-export function toCycloneDX(report, { toolVersion = '0.0.0', reproducible = false } = {}) {
+const CDX_SCHEMA = 'http://cyclonedx.org/schema/bom-1.6.schema.json';
+
+/** CycloneDX 1.6 JSON */
+export function toCycloneDX(report, { toolVersion = '0.0.0', reproducible = false, specVersion = '1.6' } = {}) {
   const rootRef = purl(report.project.name || 'project', report.project.version || '0.0.0');
   const lic = (e) => {
     if (!e) return undefined;
@@ -47,7 +49,8 @@ export function toCycloneDX(report, { toolVersion = '0.0.0', reproducible = fals
     ...report.packages.map((p) => ({ ref: purl(p.name, p.version), dependsOn: (p.dependencies || []).map((d) => refs.get(d)).filter(Boolean) })),
   ];
   return JSON.stringify({
-    bomFormat: 'CycloneDX', specVersion: '1.5',
+    $schema: CDX_SCHEMA,
+    bomFormat: 'CycloneDX', specVersion,
     serialNumber: `urn:uuid:${reproducible ? deterministicUuid(JSON.stringify(components)) : randomUUID()}`,
     version: 1,
     metadata: {

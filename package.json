@@ -1,14 +1,17 @@
 {
   "name": "license-sentinel",
-  "version": "1.0.0",
-  "description": "License compliance gate for npm projects: reads node_modules and npm/pnpm/yarn lockfiles, resolves SPDX expressions and LICENSE texts, enforces allow/deny lists, presets and project-license compatibility, and emits CycloneDX 1.5 and SPDX 2.3 SBOMs, NOTICES, and text/JSON/SARIF/Markdown reports. Zero deps.",
+  "version": "1.1.0",
+  "description": "License compliance gate for npm projects: reads node_modules and npm/pnpm/yarn lockfiles, resolves SPDX expressions and LICENSE texts, enforces allow/deny lists, presets and project-license compatibility, and emits CycloneDX 1.6 and SPDX 2.3 SBOMs, NOTICES, and text/JSON/SARIF/Markdown/CSV/HTML reports. Zero runtime deps.",
   "type": "module",
-  "main": "./src/index.js",
-  "types": "./src/index.d.ts",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./src/index.d.ts",
-      "default": "./src/index.js"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
     },
     "./package.json": "./package.json"
   },
@@ -16,6 +19,8 @@
     "license-sentinel": "bin/license-sentinel.js"
   },
   "files": [
+    "dist",
+    "src/schemas",
     "src",
     "bin",
     "action.yml",
@@ -27,6 +32,8 @@
     "node": ">=18"
   },
   "scripts": {
+    "build": "node scripts/build.mjs",
+    "pretest": "npm run build",
     "test": "node --test test/*.test.js"
   },
   "keywords": [
@@ -57,5 +64,11 @@
   "bugs": {
     "url": "https://github.com/MrLouisWright/license-sentinel/issues"
   },
-  "homepage": "https://github.com/MrLouisWright/license-sentinel#readme"
+  "homepage": "https://github.com/MrLouisWright/license-sentinel#readme",
+  "devDependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.8.2"
+  }
 }

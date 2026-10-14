@@ -13,7 +13,7 @@ inputs:
   config: { description: 'Path to JSON config file', default: '' }
   sarif: { description: 'Write SARIF to this path', default: '' }
   json: { description: 'Write JSON report to this path', default: '' }
-  cyclonedx: { description: 'Write a CycloneDX 1.5 SBOM to this path', default: '' }
+  cyclonedx: { description: 'Write a CycloneDX 1.6 SBOM to this path', default: '' }
   spdx: { description: 'Write an SPDX 2.3 SBOM to this path', default: '' }
   notices: { description: 'Write a third-party NOTICES file to this path', default: '' }
   job-summary: { description: 'Write the Markdown report to the job summary (true/false)', default: 'true' }

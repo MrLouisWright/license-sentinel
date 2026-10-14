@@ -2,6 +2,7 @@ import { readFileSync, readdirSync, existsSync, realpathSync, statSync } from 'n
 import { join, dirname, relative, sep } from 'node:path';
 import { parseYaml } from './yaml.js';
 import { LICENSE_FILE_RE } from './detect.js';
+import { findInstallRoot } from './workspace.js';
 
 const readJson = (p) => JSON.parse(readFileSync(p, 'utf8'));
 const tryJson = (p) => { try { return readJson(p); } catch { return null; } };
@@ -43,7 +44,8 @@ function classify(pkgs, edges, roots) {
 }
 
 // ---------- node_modules ----------
-export function fromNodeModules(root) {
+/** @param {string} root project package directory (package.json for dependency roots) @param {string} [installRoot] directory containing node_modules (monorepo hoisting) */
+export function fromNodeModules(root, installRoot = root) {
   const rootPj = readJson(join(root, 'package.json'));
   const pkgs = new Map(); // realpath -> pkg
   const visitPkg = (dir) => {
@@ -63,8 +65,8 @@ export function fromNodeModules(root) {
       visitPkg(join(nm, e.name));
     }
   };
-  walkNm(join(root, 'node_modules'));
-  const rootReal = realpathSync(root);
+  walkNm(join(installRoot, 'node_modules'));
+  const rootReal = realpathSync(installRoot);
   const resolveFrom = (fromDir, name) => {
     let d = fromDir;
     for (;;) {
@@ -76,10 +78,10 @@ export function fromNodeModules(root) {
   const edges = new Map();
   for (const [k, p] of pkgs) edges.set(k, Object.keys(p.deps || {}).map((n) => resolveFrom(k, n)).filter((x) => x && pkgs.has(x)));
   const r = (deps) => Object.keys(deps || {}).map((n) => resolveFrom(rootReal, n)).filter(Boolean);
-  pkgs.delete(rootReal);
+  if (root === installRoot) pkgs.delete(rootReal);
   classify(pkgs, edges, { prod: r({ ...rootPj.dependencies, ...rootPj.optionalDependencies }), dev: r({ ...rootPj.devDependencies, ...rootPj.peerDependencies }) });
   for (const p of pkgs.values()) delete p.deps;
-  return { root: fromManifest(rootPj, { licenseFiles: licenseFiles(root) }), packages: [...pkgs.values()], source: 'node_modules' };
+  return { root: fromManifest(rootPj, { licenseFiles: licenseFiles(root) }), packages: [...pkgs.values()], source: 'node_modules', installRoot };
 }
 const safeDir = (d) => { try { return readdirSync(d); } catch { return []; } };
 
@@ -120,7 +122,7 @@ function splitNameVer(key) {
   const sl = k.lastIndexOf('/'); // pnpm v5: /name/1.0.0
   return { name: k.slice(0, sl), version: stripPeer(k.slice(sl + 1)) };
 }
-export function fromPnpmLock(file, rootPj) {
+export function fromPnpmLock(file, rootPj, { importer = '.' } = {}) {
   const y = parseYaml(readFileSync(file, 'utf8')) || {};
   const ver = parseFloat(y.lockfileVersion) || 0;
   const pkgs = new Map();
@@ -139,10 +141,10 @@ export function fromPnpmLock(file, rootPj) {
   }
   const edges = new Map();
   for (const [k, p] of pkgs) { edges.set(k, Object.entries(p._deps || {}).map(([n, v]) => keyOf(n, v)).filter((x) => x && pkgs.has(x))); delete p._deps; }
-  const imp = y.importers?.['.'] || y;
+  const imp = y.importers?.[importer] || (importer === '.' ? y : y.importers?.['.']) || y;
   const rootKeys = (d) => Object.entries(d || {}).map(([n, v]) => keyOf(n, typeof v === 'object' && v ? v.version : v)).filter(Boolean);
   classify(pkgs, edges, { prod: [...rootKeys(imp.dependencies), ...rootKeys(imp.optionalDependencies)], dev: rootKeys(imp.devDependencies) });
-  return { root: rootPj ? fromManifest(rootPj) : {}, packages: [...pkgs.values()], source: 'pnpm-lock' };
+  return { root: rootPj ? fromManifest(rootPj) : {}, packages: [...pkgs.values()], source: 'pnpm-lock', importer };
 }
 
 // ---------- yarn.lock (v1 and berry) ----------
@@ -206,16 +208,17 @@ export const LOCKFILES = ['package-lock.json', 'npm-shrinkwrap.json', 'pnpm-lock
  * Collect dependencies for a project directory.
  * source: auto (node_modules if present, else lockfile) | node_modules | lockfile | <path to lockfile>
  */
-export function collectProject(dir, { source = 'auto' } = {}) {
+export function collectProject(dir, { source = 'auto', installRoot: installRootOpt, importer } = {}) {
   const pjPath = join(dir, 'package.json');
   const rootPj = tryJson(pjPath);
-  const hasNm = existsSync(join(dir, 'node_modules'));
-  const lockPath = source !== 'auto' && source !== 'node_modules' && source !== 'lockfile' ? source : LOCKFILES.map((f) => join(dir, f)).find(existsSync);
+  const installRoot = installRootOpt || findInstallRoot(dir);
+  const hasNm = existsSync(join(installRoot, 'node_modules'));
+  const lockPath = source !== 'auto' && source !== 'node_modules' && source !== 'lockfile' ? source : LOCKFILES.map((f) => join(installRoot, f)).find(existsSync);
   let result;
   if ((source === 'auto' && hasNm && rootPj) || source === 'node_modules') {
     if (!rootPj) throw new Error(`No package.json in ${dir}`);
-    if (!hasNm) throw new Error(`No node_modules in ${dir} (run npm install, or use --source lockfile)`);
-    result = fromNodeModules(dir);
+    if (!hasNm) throw new Error(`No node_modules in ${installRoot} (run npm install, or use --source lockfile)`);
+    result = fromNodeModules(dir, installRoot);
     // enrich with lockfile license/integrity when available
     if (lockPath && /package-lock|shrinkwrap/.test(lockPath)) {
       try {
@@ -225,9 +228,10 @@ export function collectProject(dir, { source = 'auto' } = {}) {
       } catch {}
     }
   } else {
-    if (!lockPath || !existsSync(lockPath)) throw new Error(`No node_modules or lockfile (${LOCKFILES.join(', ')}) in ${dir}`);
+    if (!lockPath || !existsSync(lockPath)) throw new Error(`No node_modules or lockfile (${LOCKFILES.join(', ')}) near ${dir}`);
     const base = lockPath.split(/[\\/]/).pop();
-    result = base === 'pnpm-lock.yaml' ? fromPnpmLock(lockPath, rootPj) : base === 'yarn.lock' ? fromYarnLock(lockPath, rootPj) : fromNpmLock(lockPath, rootPj);
+    const pnpmImporter = importer ?? (dir !== installRoot ? relative(installRoot, dir).split(sep).join('/') : '.');
+    result = base === 'pnpm-lock.yaml' ? fromPnpmLock(lockPath, rootPj, { importer: pnpmImporter }) : base === 'yarn.lock' ? fromYarnLock(lockPath, rootPj) : fromNpmLock(lockPath, rootPj);
     result.lockfile = base;
   }
   result.root.licenseFiles ??= licenseFiles(dir);
