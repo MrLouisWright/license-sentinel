@@ -65,7 +65,7 @@
   "bugs": {
     "url": "https://github.com/MrLouisWright/license-sentinel/issues"
   },
-  "homepage": "https://github.com/MrLouisWright/license-sentinel#readme",
+  "homepage": "https://mrlouiswright.github.io/license-sentinel/",
   "devDependencies": {
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
