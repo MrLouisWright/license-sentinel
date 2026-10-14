@@ -18,4 +18,5 @@ jobs:
       - name: Dogfood
         run: |
           node bin/license-sentinel.js --include-dev --preset permissive --fail-on low --cyclonedx bom.cdx.json --spdx bom.spdx.json
+          node -e "const b=require('./dist/index.cjs'); console.log(typeof b.audit)"
           node bin/license-sentinel.js test/fixtures/pnpm-v9 --fail-on none

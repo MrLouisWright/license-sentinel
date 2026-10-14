@@ -1,4 +1,5 @@
 import { collectProject, fromNodeModules, fromNpmLock, fromPnpmLock, fromYarnLock } from './collect.js';
+import { discoverWorkspaces, findInstallRoot } from './workspace.js';
 import { resolveLicense, noticeInfo } from './resolve.js';
 import { RULES, SEVERITIES, sevRank, PRESETS, evaluate, buildPolicy, projectCategory, matchException, entryMatches } from './policy.js';
 import { parse, stringify, options, category, normaliseId, CATEGORIES } from './spdx.js';
@@ -7,14 +8,32 @@ import { enrichFromRegistry } from './registry.js';
 export { enrichFromRegistry };
 import { parseYaml } from './yaml.js';
 export { formatText, formatJson, formatSarif, formatMarkdown } from './report.js';
+export { formatCsv, formatAttributionMarkdown, formatAttributionHtml, renderTemplate } from './templates.js';
 export { toCycloneDX, toSPDX, toNotices } from './sbom.js';
+export { discoverWorkspaces, findInstallRoot } from './workspace.js';
 export { collectProject, fromNodeModules, fromNpmLock, fromPnpmLock, fromYarnLock, resolveLicense, parse as parseSpdx, stringify as stringifySpdx, options as spdxOptions, category as licenseCategory, normaliseId, detectLicenseText, parseYaml, RULES, SEVERITIES, PRESETS, CATEGORIES, entryMatches };
 
 export class ConfigError extends Error {}
 
+function normaliseOverrides(config) {
+  const overrides = config.overrides || [];
+  if (!overrides.length) return config;
+  const exceptions = [...(config.exceptions || [])];
+  for (const [i, o] of overrides.entries()) {
+    if (!o || typeof o !== 'object' || !o.package) throw new ConfigError(`overrides[${i}] needs "package"`);
+    if (!o.reason || !String(o.reason).trim()) throw new ConfigError(`overrides[${i}] (${o.package}) needs a "reason"`);
+    if (!o.license) throw new ConfigError(`overrides[${i}] (${o.package}) needs "license"`);
+    exceptions.push({ ...o, rules: o.rules || ['missing-license', 'unknown-license', 'invalid-spdx', 'license-mismatch', 'unresolved-license'] });
+  }
+  const { overrides: _o, ...rest } = config;
+  return { ...rest, exceptions };
+}
+
 export function validateConfig(config = {}) {
+  const merged = normaliseOverrides({ ...config });
+  config = merged;
   if (config.preset && !PRESETS[config.preset]) throw new ConfigError(`Unknown preset "${config.preset}" (use ${Object.keys(PRESETS).join(', ')})`);
-  for (const k of ['allow', 'deny', 'exceptions', 'ignore']) if (config[k] !== undefined && !Array.isArray(config[k])) throw new ConfigError(`"${k}" must be an array`);
+  for (const k of ['allow', 'deny', 'exceptions', 'ignore', 'overrides']) if (config[k] !== undefined && !Array.isArray(config[k])) throw new ConfigError(`"${k}" must be an array`);
   for (const [i, ex] of (config.exceptions || []).entries()) {
     if (!ex || typeof ex !== 'object' || !ex.package) throw new ConfigError(`exceptions[${i}] needs "package"`);
     if (!ex.reason || !String(ex.reason).trim()) throw new ConfigError(`exceptions[${i}] (${ex.package}) needs a "reason"`);
@@ -33,35 +52,47 @@ export function validateConfig(config = {}) {
  * config: { preset, allow, deny, exceptions, severity, projectLicense, includeDev, source, ignore, includePrivate, now }
  */
 export function audit(dir, config = {}) {
-  validateConfig(config);
-  const collected = collectProject(dir, { source: config.source || 'auto' });
-  return auditCollected(collected, config);
+  const cfg = validateConfig({ ...config });
+  const collected = collectProject(dir, { source: cfg.source || 'auto', installRoot: cfg.installRoot, importer: cfg.importer });
+  return auditCollected(collected, cfg);
+}
+
+/** Audit every workspace package in a monorepo (npm/yarn/pnpm workspaces). */
+export function auditWorkspaces(rootDir, config = {}) {
+  const cfg = validateConfig({ ...config });
+  const workspaces = discoverWorkspaces(rootDir);
+  const installRoot = findInstallRoot(rootDir);
+  const reports = workspaces.map((w) => ({
+    workspace: { name: w.name, version: w.version, relativePath: w.relativePath, dir: w.dir, private: w.private },
+    report: auditCollected(collectProject(w.dir, { source: cfg.source || 'auto', installRoot, importer: w.relativePath === '.' ? '.' : w.relativePath }), cfg),
+  }));
+  return { tool: 'license-sentinel', mode: reports.length > 1 ? 'monorepo' : 'single', installRoot, workspaces: reports, generatedAt: new Date().toISOString() };
 }
 
 /** Async audit; with config.registry (true or a URL) missing lockfile licenses are looked up on the registry. */
 export async function auditAsync(dir, config = {}, { fetchImpl, token } = {}) {
-  validateConfig(config);
-  const collected = collectProject(dir, { source: config.source || 'auto' });
+  const cfg = validateConfig({ ...config });
+  const collected = collectProject(dir, { source: cfg.source || 'auto', installRoot: cfg.installRoot, importer: cfg.importer });
   let registryErrors = [];
-  if (config.registry) {
-    const r = await enrichFromRegistry(collected, { registry: typeof config.registry === 'string' ? config.registry : undefined, fetchImpl, token });
+  if (cfg.registry) {
+    const r = await enrichFromRegistry(collected, { registry: typeof cfg.registry === 'string' ? cfg.registry : undefined, fetchImpl, token });
     registryErrors = r.errors;
   }
-  const report = auditCollected(collected, config);
+  const report = auditCollected(collected, cfg);
   report.registryErrors = registryErrors;
   return report;
 }
 
 export function auditCollected(collected, config = {}) {
-  validateConfig(config);
-  const now = config.now ? new Date(config.now) : new Date();
+  const cfg = validateConfig({ ...config });
+  const now = cfg.now ? new Date(cfg.now) : new Date();
   const today = now.toISOString().slice(0, 10);
-  const project = projectCategory(collected.root, config);
-  const policy = buildPolicy(config, project);
-  const ignore = config.ignore || [];
-  const exceptions = (config.exceptions || []).map((e) => ({ ...e, used: false, expired: !!(e.expires && e.expires < today) }));
+  const project = projectCategory(collected.root, cfg);
+  const policy = buildPolicy(cfg, project);
+  const ignore = cfg.ignore || [];
+  const exceptions = (cfg.exceptions || []).map((e) => ({ ...e, used: false, expired: !!(e.expires && e.expires < today) }));
   const findings = []; const suppressed = []; const packages = [];
-  const pkgList = collected.packages.filter((p) => (config.includeDev || !p.dev) && !ignore.some((g) => matchException({ package: g }, p)) && !(p.private && !config.includePrivate && !p.version?.match(/^\d/)));
+  const pkgList = collected.packages.filter((p) => (cfg.includeDev || !p.dev) && !ignore.some((g) => matchException({ package: g }, p)) && !(p.private && !cfg.includePrivate && !p.version?.match(/^\d/)));
   for (const pkg of pkgList) {
     const exs = exceptions.filter((e) => matchException(e, pkg));
     let lic = resolveLicense(pkg);
@@ -82,7 +113,7 @@ export function auditCollected(collected, config = {}) {
   }
   for (const e of exceptions.filter((x) => !x.used)) findings.push({ rule: 'exception-unused', severity: RULES['exception-unused'].severity, package: e.package, version: '', license: null, dev: false, message: `Exception for "${e.package}" did not match any audited package`, fix: 'Remove stale exceptions to keep the policy honest.' });
   // severity overrides
-  const sev = config.severity || {};
+  const sev = cfg.severity || {};
   const final = findings.filter((f) => sev[f.rule] !== 'off').map((f) => (SEVERITIES.includes(sev[f.rule]) ? { ...f, severity: sev[f.rule] } : f));
   final.sort((a, b) => sevRank(a.severity) - sevRank(b.severity) || a.package.localeCompare(b.package));
   const counts = Object.fromEntries(SEVERITIES.map((s) => [s, final.filter((f) => f.severity === s).length]));
@@ -93,7 +124,7 @@ export function auditCollected(collected, config = {}) {
   return {
     tool: 'license-sentinel', generatedAt: now.toISOString(),
     project: { name: collected.root?.name, version: collected.root?.version, license: project.license, category: project.category, dir: collected.dir, source: collected.source, lockfile: collected.lockfile },
-    policy: { preset: config.preset || null, allow: policy.allow, deny: policy.deny, includeDev: !!config.includeDev },
+    policy: { preset: cfg.preset || null, allow: policy.allow, deny: policy.deny, includeDev: !!cfg.includeDev },
     summary: { packages: packages.length, prod: packages.filter((p) => !p.dev).length, dev: packages.filter((p) => p.dev).length, byCategory, byLicense },
     packages, findings: final, suppressed, counts,
   };

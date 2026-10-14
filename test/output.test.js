@@ -5,9 +5,9 @@ import { mixedProject } from './helpers.js';
 
 const r = audit(mixedProject(), { now: '2026-10-13T12:00:00Z', includeDev: true });
 
-test('CycloneDX 1.5 SBOM', () => {
-  const b = JSON.parse(toCycloneDX(r, { toolVersion: '1.0.0' }));
-  assert.equal(b.bomFormat, 'CycloneDX'); assert.equal(b.specVersion, '1.5'); assert.match(b.serialNumber, /^urn:uuid:[0-9a-f-]{36}$/);
+test('CycloneDX 1.6 SBOM', () => {
+  const b = JSON.parse(toCycloneDX(r, { toolVersion: '1.1.0' }));
+  assert.equal(b.bomFormat, 'CycloneDX'); assert.equal(b.specVersion, '1.6'); assert.match(b.serialNumber, /^urn:uuid:[0-9a-f-]{36}$/);
   assert.equal(b.metadata.component.name, 'mixed-app'); assert.deepEqual(b.metadata.component.licenses, [{ license: { id: 'MIT' } }]);
   const c = (n) => b.components.find((x) => x.name === n);
   assert.equal(c('@acme/thing').purl, 'pkg:npm/%40acme/thing@1.0.0');

@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.0 (2026-10-14)
+
+- **CycloneDX 1.6** SBOM output (default `--cyclonedx`), with official JSON schemas bundled under `src/schemas/` and CI validation via Ajv.
+- **Monorepo / workspace support:** `--workspaces` audits each npm/pnpm/yarn workspace package with hoisted `node_modules`; `--workspace-report-dir` writes one JSON report per package. Collection accepts `installRoot` / pnpm importer paths for workspace packages.
+- **Production-only parity:** `--omit=dev` (npm-style) alongside `--prod` / `--include-dev` (default: production dependencies only).
+- **Output templates:** built-in CSV inventory, Markdown attribution table, HTML attribution page, and `--template` / `--template-out` for simple `{{placeholders}}` and `{{#packages}}…{{/packages}}` blocks.
+- **Per-package license overrides:** `overrides` in config (package + `license` + required `reason`) merge into policy exceptions and replace detected licenses.
+- **Dual ESM + CJS** build (`dist/index.js` / `dist/index.cjs`) with `require`/`import` tests; TypeScript declarations emitted to `dist/index.d.ts` on build.
+- README badges, CI build step, and existing release workflow with `npm publish --provenance`.
+
 ## 1.0.0 (2026-10-13)
 
 First release, by Louis Wright.
