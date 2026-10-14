@@ -1,6 +1,5 @@
 import * as esbuild from 'esbuild';
 import { readFileSync, writeFileSync, mkdirSync, cpSync, rmSync } from 'node:fs';
-import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
