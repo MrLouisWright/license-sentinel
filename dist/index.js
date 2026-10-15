@@ -180,13 +180,18 @@ var tryJson = (p) => {
     return null;
   }
 };
+var hasInstall = (d) => existsSync(join(d, "node_modules")) || existsSync(join(d, "package-lock.json")) || existsSync(join(d, "npm-shrinkwrap.json")) || existsSync(join(d, "pnpm-lock.yaml")) || existsSync(join(d, "yarn.lock"));
+var isWorkspaceRoot = (d) => existsSync(join(d, "pnpm-workspace.yaml")) || !!tryJson(join(d, "package.json"))?.workspaces;
 function findInstallRoot(dir) {
+  if (hasInstall(dir)) return dir;
   let d = dir;
   for (; ; ) {
-    if (existsSync(join(d, "node_modules")) || existsSync(join(d, "package-lock.json")) || existsSync(join(d, "pnpm-lock.yaml")) || existsSync(join(d, "yarn.lock"))) return d;
+    if (existsSync(join(d, ".git")) && d !== dir) return dir;
     const parent = join(d, "..");
     if (parent === d) return dir;
     d = parent;
+    if (isWorkspaceRoot(d) && hasInstall(d)) return d;
+    if (existsSync(join(d, ".git"))) return dir;
   }
 }
 function expandWorkspacePatterns(root, patterns) {

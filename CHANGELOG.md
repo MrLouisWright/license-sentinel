@@ -8,6 +8,8 @@
 - **Output templates:** built-in CSV inventory, Markdown attribution table, HTML attribution page, and `--template` / `--template-out` for simple `{{placeholders}}` and `{{#packages}}…{{/packages}}` blocks.
 - **Per-package license overrides:** `overrides` in config (package + `license` + required `reason`) merge into policy exceptions and replace detected licenses.
 - **Dual ESM + CJS** build (`dist/index.js` / `dist/index.cjs`) with `require`/`import` tests; TypeScript declarations emitted to `dist/index.d.ts` on build.
+- **Fix:** install-root discovery no longer walks up into unrelated ancestor `node_modules`/lockfiles (e.g. `/node_modules`); it only climbs to a workspace root. Projects with nothing installed now correctly exit 2 / throw, and `--source lockfile` errors when nothing can be read.
+- Regenerated `package-lock.json` so `npm ci` works.
 - README badges, CI build step, and existing release workflow with `npm publish --provenance`.
 
 ## 1.0.0 (2026-10-13)

@@ -24,3 +24,18 @@ test('discovers npm workspaces and audits each package separately', () => {
   assert.equal(b.packages.some((p) => p.name === 'dev-only'), false, 'production-only by default');
   assert.equal(b.summary.dev, 0);
 });
+
+test('findInstallRoot ignores unrelated ancestor node_modules/lockfiles (regression)', async () => {
+  const { findInstallRoot } = await import('../src/workspace.js');
+  const { mkdtempSync, mkdirSync, writeFileSync } = await import('node:fs');
+  const { join } = await import('node:path');
+  const { tmpdir } = await import('node:os');
+  const outer = mkdtempSync(join(tmpdir(), 'ls-anc-'));
+  mkdirSync(join(outer, 'node_modules'));
+  writeFileSync(join(outer, 'package.json'), '{"name":"outer"}');
+  const inner = join(outer, 'proj'); mkdirSync(inner);
+  writeFileSync(join(inner, 'package.json'), '{"name":"inner"}');
+  assert.equal(findInstallRoot(inner), inner);
+  writeFileSync(join(outer, 'package.json'), '{"name":"outer","workspaces":["proj"]}');
+  assert.equal(findInstallRoot(inner), outer);
+});

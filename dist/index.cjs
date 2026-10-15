@@ -243,13 +243,18 @@ var tryJson = (p) => {
     return null;
   }
 };
+var hasInstall = (d) => (0, import_node_fs.existsSync)((0, import_node_path.join)(d, "node_modules")) || (0, import_node_fs.existsSync)((0, import_node_path.join)(d, "package-lock.json")) || (0, import_node_fs.existsSync)((0, import_node_path.join)(d, "npm-shrinkwrap.json")) || (0, import_node_fs.existsSync)((0, import_node_path.join)(d, "pnpm-lock.yaml")) || (0, import_node_fs.existsSync)((0, import_node_path.join)(d, "yarn.lock"));
+var isWorkspaceRoot = (d) => (0, import_node_fs.existsSync)((0, import_node_path.join)(d, "pnpm-workspace.yaml")) || !!tryJson((0, import_node_path.join)(d, "package.json"))?.workspaces;
 function findInstallRoot(dir) {
+  if (hasInstall(dir)) return dir;
   let d = dir;
   for (; ; ) {
-    if ((0, import_node_fs.existsSync)((0, import_node_path.join)(d, "node_modules")) || (0, import_node_fs.existsSync)((0, import_node_path.join)(d, "package-lock.json")) || (0, import_node_fs.existsSync)((0, import_node_path.join)(d, "pnpm-lock.yaml")) || (0, import_node_fs.existsSync)((0, import_node_path.join)(d, "yarn.lock"))) return d;
+    if ((0, import_node_fs.existsSync)((0, import_node_path.join)(d, ".git")) && d !== dir) return dir;
     const parent = (0, import_node_path.join)(d, "..");
     if (parent === d) return dir;
     d = parent;
+    if (isWorkspaceRoot(d) && hasInstall(d)) return d;
+    if ((0, import_node_fs.existsSync)((0, import_node_path.join)(d, ".git"))) return dir;
   }
 }
 function expandWorkspacePatterns(root, patterns) {
